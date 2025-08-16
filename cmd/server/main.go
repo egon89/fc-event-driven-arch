@@ -7,6 +7,7 @@ import (
 	"github.com/egon89/fc-event-driven-arch/internal/config"
 	"github.com/egon89/fc-event-driven-arch/internal/db"
 	"github.com/egon89/fc-event-driven-arch/internal/healthz"
+	"github.com/egon89/fc-event-driven-arch/internal/kafka"
 	"github.com/go-chi/chi"
 )
 
@@ -17,6 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
+
+	go kafka.Consumer(cfg.KafkaBroker, cfg.KafkaTopic)
 
 	healthzHandler := healthz.NewHealthzHandler()
 
