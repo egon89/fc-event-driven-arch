@@ -2,27 +2,68 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 
+	"github.com/egon89/fc-event-driven-arch/internal/usecase"
 	"github.com/segmentio/kafka-go"
 )
 
-func Consumer(broker, topic string) {
+type saveBalanceConsumerInputDto struct {
+	AccountIdFrom      string  `json:"account_id_from"`
+	BalanceAccountFrom float64 `json:"balance_account_id_from"`
+	AccountIdTo        string  `json:"account_id_to"`
+	BalanceAccountTo   float64 `json:"balance_account_id_to"`
+}
+
+type balanceConsumer struct {
+	Reader  *kafka.Reader
+	UseCase *usecase.SaveBalanceUseCase
+}
+
+func NewBalanceConsumer(broker, topic string, useCase *usecase.SaveBalanceUseCase) *balanceConsumer {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{broker},
 		Topic:   topic,
 		GroupID: "balance-group",
 	})
 
-	log.Printf("kafka consumer listening on topic %s\n", topic)
+	return &balanceConsumer{
+		Reader:  reader,
+		UseCase: useCase,
+	}
+}
+
+func (bc *balanceConsumer) Consume(ctx context.Context) {
+	log.Printf("kafka consumer listening on topic %s\n", bc.Reader.Config().Topic)
 
 	for {
-		message, err := reader.ReadMessage(context.Background())
+		message, err := bc.Reader.ReadMessage(ctx)
 		if err != nil {
-			log.Printf("error reading message: %v", err)
+			log.Printf("error reading message: %v\n", err)
 			continue
 		}
 
 		log.Printf("received: %s = %s\n", string(message.Key), string(message.Value))
+
+		var input saveBalanceConsumerInputDto
+		err = json.Unmarshal(message.Value, &input)
+		if err != nil {
+			log.Printf("error unmarshalling message: %v", err)
+			continue
+		}
+
+		log.Printf("processing input: %+v\n", input)
+
+		err = bc.UseCase.Execute(ctx, usecase.SaveBalanceInputDto{
+			AccountIdFrom:      input.AccountIdFrom,
+			BalanceAccountFrom: input.BalanceAccountFrom,
+			AccountIdTo:        input.AccountIdTo,
+			BalanceAccountTo:   input.BalanceAccountTo,
+		})
+		if err != nil {
+			log.Printf("error executing use case: %v\n", err)
+			continue
+		}
 	}
 }
