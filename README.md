@@ -14,6 +14,13 @@ make migrate-up
 make migrate-down
 ```
 
+Using golang-migrate docker image:
+```bash
+docker run --rm -v $(pwd)/database/migrations:/migrations --network host migrate/migrate \
+    -path=/migrations -database="postgres://postgres:postgres@localhost:5432/event_driven_arch?sslmode=disable" up
+
+```
+
 ### Accessing the database
 You can access the PostgreSQL database using the following command:
 ```bash
