@@ -1,0 +1,5 @@
+### healthz
+GET http://localhost:8080/healthz HTTP/1.1
+
+### get balance by account id
+GET http://localhost:8080/balances/48777f20-e467-4ed5-b379-7475378067fb HTTP/1.1

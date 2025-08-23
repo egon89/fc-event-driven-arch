@@ -12,7 +12,9 @@ import (
 	"github.com/egon89/fc-event-driven-arch/internal/repository"
 	"github.com/egon89/fc-event-driven-arch/internal/service"
 	"github.com/egon89/fc-event-driven-arch/internal/usecase"
+	"github.com/egon89/fc-event-driven-arch/internal/web"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -29,6 +31,7 @@ func main() {
 
 	balanceService := service.NewBalanceService(balanceRepository)
 
+	findBalanceByAccountIdUseCase := usecase.NewFindBalanceByAccountIdUseCase(balanceService)
 	saveBalanceUseCase := usecase.NewSaveBalanceUseCase(balanceService)
 
 	balanceConsumer := kafka.NewBalanceConsumer(cfg.KafkaBroker, cfg.KafkaTopic, saveBalanceUseCase)
@@ -36,9 +39,12 @@ func main() {
 	go balanceConsumer.Consume(ctx)
 
 	healthzHandler := healthz.NewHealthzHandler()
+	webBalanceHandler := web.NewWebBalanceHandler(*findBalanceByAccountIdUseCase)
 
 	r := chi.NewRouter()
+	r.Use(middleware.Logger)
 	r.Mount("/healthz", healthzHandler.Routes())
+	r.Mount("/balances", webBalanceHandler.Routes())
 
 	log.Printf("Server running on port %s", cfg.AppPort)
 
