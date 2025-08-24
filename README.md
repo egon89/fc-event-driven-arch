@@ -37,3 +37,21 @@ psql -U postgres # connect to the database
 
 \dt # list tables
 ```
+
+### Producing messages
+Use the Kafka console producer to send messages to the `balance` topic:
+```bash
+docker exec -it kafka bash
+
+# Inside the Kafka container
+kafka-console-producer --broker-list localhost:9092 --topic balance
+
+# Produce a message
+{
+	"account_id_from": "48777f20-e467-4ed5-b379-7475378067fb",
+	"account_id_to": "18fa87a6-4293-4acf-a003-1122efa0acc3",
+	"balance_account_id_from": 100.21,
+	"balance_account_id_to": 50.90
+}
+```
+Or you can use the Control Center to produce messages to the `balance` topic using the UI.
