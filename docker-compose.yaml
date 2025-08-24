@@ -1,7 +1,32 @@
 services:
-  postgres:
+  balance-app:
+    container_name: balance-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BALANCE_APP_PORT: ${BALANCE_APP_PORT} # for building the image
+    ports:
+      - "${BALANCE_APP_PORT:-8080}:${BALANCE_APP_PORT:-8080}" # host:container will have the same port
+    environment:
+      - BALANCE_APP_PORT=${BALANCE_APP_PORT} # for runtime
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - KAFKA_BROKER=${KAFKA_BROKER}
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  postgresdb:
     image: postgres:15
-    container_name: postgres
+    container_name: postgresdb
+    hostname: postgresdb
     env_file:
       - .env
     environment:
@@ -23,11 +48,11 @@ services:
     image: migrate/migrate
     container_name: migrate-balance
     depends_on:
-      postgres:
+      postgresdb:
         condition: service_healthy
     command: [
       "-path", "/migrations",
-      "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable",
+      "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgresdb:5432/${DB_NAME}?sslmode=disable",
       "-verbose",
       "up"
     ]
@@ -54,13 +79,17 @@ services:
     # Use kafka:29092 for connections internal on the docker network
     # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
       - '9092:9092'
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     environment:
-      # TZ: Sao_Paulo/Brazil
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://${KAFKA_BROKER}
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1

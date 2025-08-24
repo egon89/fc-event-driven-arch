@@ -22,6 +22,8 @@ type balanceConsumer struct {
 }
 
 func NewBalanceConsumer(broker, topic string, useCase *usecase.SaveBalanceUseCase) *balanceConsumer {
+	log.Printf("initializing kafka at %s listening on topic %s\n", broker, topic)
+
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{broker},
 		Topic:   topic,
