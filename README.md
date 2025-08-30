@@ -24,10 +24,10 @@ docker run --rm -v $(pwd)/database/migrations:/migrations --network host migrate
 ### Accessing the database
 You can access the PostgreSQL database using the following command:
 ```bash
-docker exec -it postgres psql -U postgres -d event_driven_arch
+docker exec -it postgresdb psql -U postgres -d event_driven_arch
 
 # step by step version
-docker-compose exec postgres /bin/bash
+docker-compose exec postgresdb /bin/bash
 
 psql -U postgres # connect to the database
 
