@@ -50,6 +50,6 @@ func (uc *SaveBalanceUseCase) upsertBalance(ctx context.Context, accountId strin
 		})
 	}
 
-	balance.Balance += balanceAmount
+	balance.Balance = balanceAmount
 	return uc.balanceService.Update(ctx, balance)
 }

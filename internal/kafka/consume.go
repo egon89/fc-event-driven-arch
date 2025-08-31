@@ -9,6 +9,11 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+type balanceUpdatedEvent struct {
+	Name    string
+	Payload saveBalanceConsumerInputDto
+}
+
 type saveBalanceConsumerInputDto struct {
 	AccountIdFrom      string  `json:"account_id_from"`
 	BalanceAccountFrom float64 `json:"balance_account_id_from"`
@@ -48,7 +53,7 @@ func (bc *balanceConsumer) Consume(ctx context.Context) {
 
 		log.Printf("received: %s = %s\n", string(message.Key), string(message.Value))
 
-		var input saveBalanceConsumerInputDto
+		var input balanceUpdatedEvent
 		err = json.Unmarshal(message.Value, &input)
 		if err != nil {
 			log.Printf("error unmarshalling message: %v", err)
@@ -58,10 +63,10 @@ func (bc *balanceConsumer) Consume(ctx context.Context) {
 		log.Printf("processing input: %+v\n", input)
 
 		err = bc.UseCase.Execute(ctx, usecase.SaveBalanceInputDto{
-			AccountIdFrom:      input.AccountIdFrom,
-			BalanceAccountFrom: input.BalanceAccountFrom,
-			AccountIdTo:        input.AccountIdTo,
-			BalanceAccountTo:   input.BalanceAccountTo,
+			AccountIdFrom:      input.Payload.AccountIdFrom,
+			BalanceAccountFrom: input.Payload.BalanceAccountFrom,
+			AccountIdTo:        input.Payload.AccountIdTo,
+			BalanceAccountTo:   input.Payload.BalanceAccountTo,
 		})
 		if err != nil {
 			log.Printf("error executing use case: %v\n", err)
