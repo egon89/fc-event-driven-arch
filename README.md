@@ -1,7 +1,36 @@
 # FC Event-Driven Architecture
 This is a sample project to demonstrate an event-driven architecture using Go, PostgreSQL, and Kafka. The project includes a simple API to manage user balances and uses Kafka to handle balance updates asynchronously.
 
-## Database
+The core service emits events to Kafka when a transaction occurs, and the balance service listens to these events to update the user balances in the database. The original core service code is located in [https://github.com/devfullcycle/fc-eda](https://github.com/devfullcycle/fc-eda).
+
+## Start
+Create a `.env` file according to the `.env.example` file.
+```bash
+cp .env.example .env
+```
+
+To start the project, you can use Docker Compose. Run the following command:
+
+```bash
+docker-compose up
+```
+
+All initial database scripts and migrations will run automatically when you start the project with Docker Compose.
+
+The core service will have two clients with two accounts each:
+- Client John Doe:
+  - Account ID: 546fbcb8-180a-4dd9-b36b-16304cf3e60a
+  - Initial Balance: 1000.00
+
+- Client Jane Doe:
+  - Account ID: ca88c60a-6092-49a7-9d58-6bd16fbc30d2
+  - Initial Balance: 500.00
+
+Use the `request.http` file to do some transactions between these accounts.
+
+---
+
+## Dev information
 ### golang-migrate
 - [Installation](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate#linux-deb-package)
 - [How to use migrations with Golang](https://medium.com/@albertcolom/how-to-use-migrations-with-golang-f46f4737beda)

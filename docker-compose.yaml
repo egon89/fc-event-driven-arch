@@ -1,8 +1,8 @@
 services:
-  balance-app:
-    container_name: balance-app
+  balance-service:
+    container_name: balance-service
     build:
-      context: .
+      context: ./balance-service
       dockerfile: Dockerfile
       args:
         BALANCE_APP_PORT: ${BALANCE_APP_PORT} # for building the image
@@ -10,11 +10,11 @@ services:
       - "${BALANCE_APP_PORT:-8080}:${BALANCE_APP_PORT:-8080}" # host:container will have the same port
     environment:
       - BALANCE_APP_PORT=${BALANCE_APP_PORT} # for runtime
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${BALANCE_DB_HOST}
+      - DB_PORT=${BALANCE_DB_PORT}
+      - DB_NAME=${BALANCE_DB_NAME}
+      - DB_USER=${BALANCE_DB_USER}
+      - DB_PASSWORD=${BALANCE_DB_PASSWORD}
       - KAFKA_BROKER=${KAFKA_BROKER}
       - KAFKA_TOPIC=${KAFKA_TOPIC}
     depends_on:
@@ -27,22 +27,20 @@ services:
     image: postgres:15
     container_name: postgresdb
     hostname: postgresdb
-    env_file:
-      - .env
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${BALANCE_DB_USER}
+      POSTGRES_PASSWORD: ${BALANCE_DB_PASSWORD}
+      POSTGRES_DB: ${BALANCE_DB_NAME}
     ports:
-      - "${DB_PORT}:5432"
+      - "${BALANCE_DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${BALANCE_DB_USER} -d ${BALANCE_DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - .docker/initdb:/docker-entrypoint-initdb.d
+      - ./balance-service/.docker/initdb:/docker-entrypoint-initdb.d
   
   migrate-balance:
     image: migrate/migrate
@@ -52,22 +50,28 @@ services:
         condition: service_healthy
     command: [
       "-path", "/migrations",
-      "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgresdb:5432/${DB_NAME}?sslmode=disable",
+      "-database", "postgres://${BALANCE_DB_USER}:${BALANCE_DB_PASSWORD}@postgresdb:5432/${BALANCE_DB_NAME}?sslmode=disable",
       "-verbose",
       "up"
     ]
     volumes:
-      - ./database/migrations:/migrations
+      - ./balance-service/database/migrations:/migrations
 
   core-service:
     container_name: core-service
     build: 
       context: ./core-service
       dockerfile: Dockerfile
-    env_file:
-      - ./core-service/.env
     ports:
       - "8081:8080"
+    environment:
+      - DB_HOST=${CORE_DB_HOST}
+      - DB_PORT=${CORE_DB_PORT}
+      - DB_NAME=${CORE_DB_NAME}
+      - DB_USER=${CORE_DB_USER}
+      - DB_PASSWORD=${CORE_DB_PASSWORD}
+      - KAFKA_BROKER=${KAFKA_BROKER}
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
     depends_on:
       mysql:
         condition: service_healthy
@@ -79,9 +83,9 @@ services:
     image: mysql:5.7
     platform: linux/amd64
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: wallet
-      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${CORE_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${CORE_DB_NAME}
+      MYSQL_PASSWORD: ${CORE_DB_PASSWORD}
     ports:
       - 3306:3306
     healthcheck:

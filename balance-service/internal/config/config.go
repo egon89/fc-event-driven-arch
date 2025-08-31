@@ -27,8 +27,8 @@ func Load() *Config {
 		DatabaseName:     getEnv("DB_NAME", ""),
 		DatabaseUser:     getEnv("DB_USER", ""),
 		DatabasePassword: getEnv("DB_PASSWORD", ""),
-		KafkaBroker:      getEnv("KAFKA_BROKER", "localhost:9092"),
-		KafkaTopic:       getEnv("KAFKA_TOPIC", "person-events"),
+		KafkaBroker:      getEnv("KAFKA_BROKER", "kafka:9092"),
+		KafkaTopic:       getEnv("KAFKA_TOPIC", "balances"),
 		AppPort:          getEnv("APP_PORT", "8080"),
 	}
 

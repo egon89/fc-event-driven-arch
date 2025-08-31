@@ -1,37 +1,20 @@
-###
-POST http://localhost:3000/clients HTTP/1.1
-Content-Type: application/json
-
-{
-    "name": "John Doe",
-    "email": "john@j.com"
-}
-
-###
-POST http://localhost:3000/accounts HTTP/1.1
-Content-Type: application/json
-
-{
-    "client_id": "87495b95-1c7f-4038-ae55-ab36ed6a9411"
-}
-
-###
+### transaction from John Doe to Jane Doe
 POST http://localhost:8081/transactions HTTP/1.1
 Content-Type: application/json
 
 {
     "account_id_from": "546fbcb8-180a-4dd9-b36b-16304cf3e60a",
     "account_id_to": "ca88c60a-6092-49a7-9d58-6bd16fbc30d2",
-    "amount": 50.99
+    "amount": 100.99
 }
 
 
-###
+### transaction from Jane Doe to John Doe
 POST http://localhost:8081/transactions HTTP/1.1
 Content-Type: application/json
 
 {
     "account_id_from": "ca88c60a-6092-49a7-9d58-6bd16fbc30d2",
     "account_id_to": "546fbcb8-180a-4dd9-b36b-16304cf3e60a",
-    "amount": 100
+    "amount": 50.90
 }
