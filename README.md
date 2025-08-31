@@ -21,7 +21,7 @@ docker run --rm -v $(pwd)/database/migrations:/migrations --network host migrate
 
 ```
 
-### Accessing the database
+### Accessing the database - PostgreSQL
 You can access the PostgreSQL database using the following command:
 ```bash
 docker exec -it postgresdb psql -U postgres -d event_driven_arch
@@ -36,6 +36,24 @@ psql -U postgres # connect to the database
 \c event_driven_arch # connect to the database
 
 \dt # list tables
+```
+
+### Accessing the database - MySQL
+You can access the MySQL database using the following command:
+```bash
+docker-compose exec mysql bash
+
+# Inside the MySQL container
+mysql -u root -p
+
+# Show databases
+SHOW DATABASES;
+
+# Use the wallet database
+USE wallet;
+
+# Show tables
+SHOW TABLES;
 ```
 
 ### Producing messages

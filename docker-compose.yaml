@@ -59,6 +59,39 @@ services:
     volumes:
       - ./database/migrations:/migrations
 
+  core-service:
+    container_name: core-service
+    build: 
+      context: ./core-service
+      dockerfile: Dockerfile
+    env_file:
+      - ./core-service/.env
+    ports:
+      - "8081:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  mysql:
+    container_name: mysql
+    image: mysql:5.7
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wallet
+      MYSQL_PASSWORD: root
+    ports:
+      - 3306:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+    volumes:
+      - mysql_db_data:/var/lib/mysql
+      - ./core-service/.docker/initdb:/docker-entrypoint-initdb.d
+
   zookeeper:
     image: "confluentinc/cp-zookeeper:6.1.0"
     container_name: zookeeper
@@ -115,3 +148,4 @@ services:
 
 volumes:
   postgres_data:
+  mysql_db_data:
